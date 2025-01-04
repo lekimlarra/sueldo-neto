@@ -171,7 +171,7 @@ export class AppComponent {
     },
     indexAxis: 'y',
     aspectRatio: window.innerWidth < 500 ? 1 : 2,
-    responsive: false,
+    responsive: true,
     scales: {
       x: {
         stacked: true,
