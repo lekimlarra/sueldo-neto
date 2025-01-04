@@ -156,7 +156,7 @@ export class AppComponent {
     },
   ];
   public barChartData = {
-    labels: ['Salario neto', 'Papá estado'],
+    labels: ['Para el trabajador', 'Para el estado'],
     datasets: this.dataSet,
   };
   public barChartOptions: ChartOptions = {
