@@ -2,16 +2,23 @@ import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartOptions, ChartType, ChartDataset } from 'chart.js';
+import { FormsModule } from '@angular/forms';
 
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, BaseChartDirective],
+  imports: [RouterOutlet, BaseChartDirective, FormsModule],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
 export class AppComponent {
   title = 'sueldo-neto';
+  // Property for two-way data binding
+  public selectedPeriod: string = 'anual';
+  public brutoNeto: string = 'bruto';
+  public pagas: string = '12';
+  public sueldo: number | null = null;
+
     // Dummy data for the bar chart
     public barChartOptions: ChartOptions = {
       plugins: {

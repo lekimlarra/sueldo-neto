@@ -3,19 +3,31 @@
     <div class="row">
       <div class="col-sm-2"></div>
       <div class="col-sm-2">
-        <select class="form-select" aria-label="Default select example">
+        <select
+          class="form-select"
+          aria-label="Default select example"
+          [(ngModel)]="selectedPeriod"
+        >
           <option selected value="anual">Anual</option>
           <option value="mensual">Mensual</option>
         </select>
       </div>
       <div class="col-sm-2">
-        <select class="form-select" aria-label="Default select example">
+        <select
+          class="form-select"
+          aria-label="Default select example"
+          [(ngModel)]="brutoNeto"
+        >
           <option selected value="bruto">Bruto</option>
           <option value="neto">Neto</option>
         </select>
       </div>
       <div class="col-sm-2">
-        <select class="form-select" aria-label="Default select example">
+        <select
+          class="form-select"
+          aria-label="Default select example"
+          [(ngModel)]="pagas"
+        >
           <option selected value="12">12 pagas</option>
           <option value="14">14 pagas</option>
         </select>
@@ -27,6 +39,7 @@
             id="typeNumber"
             class="form-control"
             placeholder="Sueldo"
+            [(ngModel)]="sueldo"
           />
         </div>
       </div>
