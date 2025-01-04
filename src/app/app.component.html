@@ -42,8 +42,6 @@
             [(ngModel)]="sueldo"
             (ngModelChange)="actualizarGrafico()"
           />
-          sse:
-          {{ calcularSSEmpresa().total }}
         </div>
       </div>
       <div class="col-sm-2"></div>
@@ -53,16 +51,7 @@
     <div class="row">
       <div class="col-sm-2"></div>
       <div class="col-sm-8">
-        aaaabarChartData.datasets[0].data:
-        {{ barChartData.datasets[0].data }}
-        <canvas
-          baseChart
-          [data]="barChartData"
-          [options]="barChartOptions"
-          [legend]="false"
-          [type]="'bar'"
-        >
-        </canvas>
+        <canvas id="myChart" baseChart> </canvas>
       </div>
       <div class="col-sm-2"></div>
     </div>
