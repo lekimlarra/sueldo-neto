@@ -56,6 +56,36 @@
       <div class="col-sm-2"></div>
     </div>
   </div>
+  <div class="container mt-5">
+    <div class="row">
+      <div class="col-sm-2"></div>
+      <div class="col-sm-4">
+        <h4>Resumen:</h4>
+        <ul class="list-group">
+          <li class="list-group-item">
+            Costes seguridad social empresa:
+            {{ this.calcularSSEmpresa().total }}
+          </li>
+          <li class="list-group-item">
+            Costes seguridad social trabajador:
+            {{ this.results.cuota_segsocial }}
+          </li>
+          <li class="list-group-item">
+            IRPF pagado por el trabajador: {{ this.results.cuota_irpf }}
+          </li>
+          <li class="list-group-item">
+            Sueldo neto recibido: {{ this.results.sueldo_neto }}
+          </li>
+        </ul>
+      </div>
+      <div class="col-sm-4"></div>
+      <div class="col-sm-2"></div>
+    </div>
+  </div>
+
+  <div class="container mt-5">
+    <div class="row"></div>
+  </div>
 </main>
 
 <router-outlet />
