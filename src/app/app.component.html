@@ -3,32 +3,32 @@
     <div class="row">
       <div class="col-sm-2"></div>
       <div class="col-sm-2">
-        <div class="d-flex justify-content-center">Anual/Mensual</div>
-        <div class="dropdown">
-          <button
-            class="btn btn-secondary dropdown-toggle"
-            type="button"
-            id="dropdownMenuButton1"
-            data-bs-toggle="dropdown"
-            aria-expanded="false"
-          >
-            Dropdown button
-          </button>
-          <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
-            <li><a class="dropdown-item" href="#">Action</a></li>
-            <li><a class="dropdown-item" href="#">Another action</a></li>
-            <li><a class="dropdown-item" href="#">Something else here</a></li>
-          </ul>
+        <select class="form-select" aria-label="Default select example">
+          <option selected value="anual">Anual</option>
+          <option value="mensual">Mensual</option>
+        </select>
+      </div>
+      <div class="col-sm-2">
+        <select class="form-select" aria-label="Default select example">
+          <option selected value="bruto">Bruto</option>
+          <option value="neto">Neto</option>
+        </select>
+      </div>
+      <div class="col-sm-2">
+        <select class="form-select" aria-label="Default select example">
+          <option selected value="12">12 pagas</option>
+          <option value="14">14 pagas</option>
+        </select>
+      </div>
+      <div class="col-sm-2">
+        <div data-mdb-input-init class="form-outline">
+          <input
+            type="number"
+            id="typeNumber"
+            class="form-control"
+            placeholder="Sueldo"
+          />
         </div>
-      </div>
-      <div class="col-sm-2">
-        <div class="d-flex justify-content-center">Bruto/Neto</div>
-      </div>
-      <div class="col-sm-2">
-        <div class="d-flex justify-content-center">14/12</div>
-      </div>
-      <div class="col-sm-2">
-        <div class="d-flex justify-content-center">Sueldo input</div>
       </div>
       <div class="col-sm-2"></div>
     </div>
