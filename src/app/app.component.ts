@@ -3,11 +3,12 @@ import { RouterOutlet } from '@angular/router';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartOptions, ChartType, ChartDataset } from 'chart.js';
 import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
 
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, BaseChartDirective, FormsModule],
+  imports: [RouterOutlet, BaseChartDirective, FormsModule, CommonModule],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
@@ -19,14 +20,66 @@ export class AppComponent {
   public pagas: string = '12';
   public sueldo: number | null = null;
 
-    // Dummy data for the bar chart
+  calcularSSEmpresa(){
+    const sse = {
+      total: 0,
+      contingenciasComunes: this.sueldo! * 0.236,
+      desempleo: this.sueldo! * 0.055,
+      contingenciasProfesionales: this.sueldo! * 0.035,
+      formacion: this.sueldo! * 0.006,
+      fogasa: this.sueldo! * 0.002
+    }
+    sse.total = sse.contingenciasComunes + sse.desempleo + sse.contingenciasProfesionales + sse.formacion + sse.fogasa;
+    return sse;
+  }
+
+  calcularSSTrabajador(){
+  }
+
+
+  calcularIRPF(){
+  }
+
+  
+  calcularNeto(){
+  }
+
+  actualizarGrafico(){
+    console.log("Actualizando gráfico");
+    this.barChartData.datasets[0].data = [this.calcularSSEmpresa().total, 59, 80, 81];
+    console.log("this.dataSet:", this.dataSet)
+    console.log("this.barChartData:", this.barChartData)
+  }
+
+
+  public dataSet: ChartDataset<'bar'>[] = [{
+    data: [0, 0, 0, 0],
+    backgroundColor: [
+      'rgba(255, 99, 132, 0.2)',
+      'rgba(75, 192, 192, 0.2)',
+      'rgba(54, 162, 235, 0.2)',
+      'rgba(153, 102, 255, 0.2)'
+    ],
+    borderColor: [
+      'rgb(255, 99, 132)',
+      'rgb(75, 192, 192)',
+      'rgb(54, 162, 235)',
+      'rgb(153, 102, 255)'
+    ],
+    borderWidth: 1
+  }];
+  public barChartData = {
+    labels: ['Seguridad Social empresa', "Seguridad Social trabajador", "IRPF", "Salario neto"],
+    datasets: this.dataSet
+  };
     public barChartOptions: ChartOptions = {
       plugins: {
         title: {
           display: true,
-          text: 'Chart.js Bar Chart - Stacked'
+          text: 'Distribution de tu salario',
         },
       },
+      
       responsive: true,
       scales: {
         x: {
@@ -36,51 +89,4 @@ export class AppComponent {
           stacked: true
         }
       }}
-    public barChartLabels: string[] = ['Seguridad Social empresa', "Seguridad Social trabajador", "IRPF", "Salario neto"];
-    public barChartType: ChartType = 'bar';
-    public barChartLegend = true;
-    public barChartPlugins = [];
-    
-    public barChartData = {
-      labels: this.barChartLabels,
-      datasets: [{
-        label: 'My First Dataset',
-        data: [65, 59, 80, 81],
-        backgroundColor: [
-          'rgba(255, 99, 132, 0.2)',
-          'rgba(75, 192, 192, 0.2)',
-          'rgba(54, 162, 235, 0.2)',
-          'rgba(153, 102, 255, 0.2)'
-        ],
-        borderColor: [
-          'rgb(255, 99, 132)',
-          'rgb(75, 192, 192)',
-          'rgb(54, 162, 235)',
-          'rgb(153, 102, 255)'
-        ],
-        borderWidth: 1
-      }/*,{
-        label: 'My Second Dataset',
-        data: [10, 10, 10, 10, 10, 10, 10],
-        backgroundColor: [
-          'rgba(12, 76, 204, 0.2)',
-          'rgba(12, 76, 204, 0.2)',
-          'rgba(12, 76, 204, 0.2)',
-          'rgba(12, 76, 204, 0.2)',
-          'rgba(12, 76, 204, 0.2)',
-          'rgba(12, 76, 204, 0.2)',
-          'rgba(12, 76, 204, 0.2)'
-        ],
-        borderColor: [
-          'rgb(255, 99, 132)',
-          'rgb(255, 159, 64)',
-          'rgb(255, 205, 86)',
-          'rgb(75, 192, 192)',
-          'rgb(54, 162, 235)',
-          'rgb(153, 102, 255)',
-          'rgb(201, 203, 207)'
-        ],
-        borderWidth: 1
-      }*/]
-    }
 }
