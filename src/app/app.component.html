@@ -7,6 +7,7 @@
           class="form-select"
           aria-label="Default select example"
           [(ngModel)]="selectedPeriod"
+          (ngModelChange)="actualizarGrafico()"
         >
           <option selected value="anual">Anual</option>
           <option value="mensual">Mensual</option>
@@ -17,6 +18,7 @@
           class="form-select"
           aria-label="Default select example"
           [(ngModel)]="brutoNeto"
+          (ngModelChange)="actualizarGrafico()"
         >
           <option selected value="bruto">Bruto</option>
           <option value="neto">Neto</option>
@@ -27,6 +29,7 @@
           class="form-select"
           aria-label="Default select example"
           [(ngModel)]="pagas"
+          (ngModelChange)="actualizarGrafico()"
         >
           <option selected value="12">12 pagas</option>
           <option value="14">14 pagas</option>

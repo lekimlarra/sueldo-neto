@@ -24,11 +24,11 @@ export class AppComponent {
   calcularSSEmpresa(): any {
     const sse = {
       total: 0,
-      contingenciasComunes: this.sueldo! * 0.236,
-      desempleo: this.sueldo! * 0.055,
-      contingenciasProfesionales: this.sueldo! * 0.035,
-      formacion: this.sueldo! * 0.006,
-      fogasa: this.sueldo! * 0.002,
+      contingenciasComunes: this.calcularSalarioBrutoAnutal() * 0.236,
+      desempleo: this.calcularSalarioBrutoAnutal() * 0.055,
+      contingenciasProfesionales: this.calcularSalarioBrutoAnutal() * 0.035,
+      formacion: this.calcularSalarioBrutoAnutal() * 0.006,
+      fogasa: this.calcularSalarioBrutoAnutal() * 0.002,
     };
     sse.total =
       sse.contingenciasComunes +
@@ -47,9 +47,17 @@ export class AppComponent {
     total_pagado_empresa: 0,
   };
 
+  calcularSalarioBrutoAnutal(): number {
+    let salario_bruto_anual = this.sueldo!;
+    if (this.selectedPeriod == 'mensual') {
+      salario_bruto_anual = this.sueldo! * Number(this.pagas);
+    }
+    return salario_bruto_anual;
+  }
+
   actualizarGrafico() {
     // TODO cambiar el this sueldo por el calculo segun los inputs
-    let salario_bruto_anual = this.sueldo!;
+    let salario_bruto_anual = this.calcularSalarioBrutoAnutal();
     this.results = this.f_calcular_resultado(salario_bruto_anual);
     this.results.total_pagado_empresa =
       this.calcularSSEmpresa().total + salario_bruto_anual;
