@@ -48,28 +48,30 @@ export class AppComponent {
   };
 
   aproximarBrutoAPartirDeNeto(): number {
-    let netoAnual = this.sueldo!;
-    if (this.selectedPeriod == 'mensual') {
-      netoAnual = this.sueldo! * Number(this.pagas);
-    }
-    // Primera aproximación
-    let brutoAproximado = netoAnual * 2;
-    let resultadosIteracion = this.f_calcular_resultado(brutoAproximado);
-    let error = resultadosIteracion.sueldo_neto - netoAnual;
-    console.log(
-      `error primera it: ${error} para bruto inicial: ${brutoAproximado}`
-    );
-    let it = 0;
-    while (Math.abs(error) > 0.5 && it < 100) {
-      it++;
-      brutoAproximado = brutoAproximado - error;
-      resultadosIteracion = this.f_calcular_resultado(brutoAproximado);
-      error = resultadosIteracion.sueldo_neto - netoAnual;
+    let brutoAproximado = 0;
+    if (this.sueldo !== null) {
+      let netoAnual = this.sueldo!;
+      if (this.selectedPeriod == 'mensual') {
+        netoAnual = this.sueldo! * Number(this.pagas);
+      }
+      // Primera aproximación
+      brutoAproximado = netoAnual * 2;
+      let resultadosIteracion = this.f_calcular_resultado(brutoAproximado);
+      let error = resultadosIteracion.sueldo_neto - netoAnual;
+      let it = 0;
       console.log(
         `error it[${it}]: ${error} para bruto inicial: ${brutoAproximado}`
       );
+      while (Math.abs(error) > 0.5 && it < 100) {
+        it++;
+        brutoAproximado = brutoAproximado - error;
+        resultadosIteracion = this.f_calcular_resultado(brutoAproximado);
+        error = resultadosIteracion.sueldo_neto - netoAnual;
+        console.log(
+          `error it[${it}]: ${error} para bruto inicial: ${brutoAproximado}`
+        );
+      }
     }
-    console.log('Resultados aproximados:', resultadosIteracion);
     return brutoAproximado;
   }
 
@@ -87,25 +89,17 @@ export class AppComponent {
   }
 
   actualizarGrafico() {
-    // TODO cambiar el this sueldo por el calculo segun los inputs
-    let salario_bruto_anual = this.calcularSalarioBrutoAnutal();
-    this.results = this.f_calcular_resultado(salario_bruto_anual);
-    this.results.total_pagado_empresa =
-      this.calcularSSEmpresa().total + salario_bruto_anual;
-
-    /*
-    
-    Salario neto
-    Seguridad Social Empresa
-    Seguridad Social Trabajador
-    IRPF
-     */
-
-    this.barChartData.datasets[0].data = [this.results.sueldo_neto, 0];
-    this.barChartData.datasets[1].data = [0, this.calcularSSEmpresa().total];
-    this.barChartData.datasets[2].data = [0, this.results.cuota_segsocial];
-    this.barChartData.datasets[3].data = [0, this.results.cuota_irpf];
-    this.chart.update();
+    if (this.sueldo) {
+      let salario_bruto_anual = this.calcularSalarioBrutoAnutal();
+      this.results = this.f_calcular_resultado(salario_bruto_anual);
+      this.results.total_pagado_empresa =
+        this.calcularSSEmpresa().total + salario_bruto_anual;
+      this.barChartData.datasets[0].data = [this.results.sueldo_neto, 0];
+      this.barChartData.datasets[1].data = [0, this.calcularSSEmpresa().total];
+      this.barChartData.datasets[2].data = [0, this.results.cuota_segsocial];
+      this.barChartData.datasets[3].data = [0, this.results.cuota_irpf];
+      this.chart.update();
+    }
   }
 
   ngOnInit() {
@@ -176,8 +170,8 @@ export class AppComponent {
       },
     },
     indexAxis: 'y',
-    aspectRatio: 2,
-    responsive: true,
+    aspectRatio: window.innerWidth < 500 ? 1 : 2,
+    responsive: false,
     scales: {
       x: {
         stacked: true,
