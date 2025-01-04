@@ -137,6 +137,8 @@ export class AppComponent {
         display: true,
       },
     },
+    indexAxis: 'y',
+    aspectRatio: 2,
     responsive: true,
     scales: {
       x: {
