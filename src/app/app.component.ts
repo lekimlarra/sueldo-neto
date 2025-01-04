@@ -44,18 +44,29 @@ export class AppComponent {
     cuota_segsocial: 0,
     sueldo_neto: 0,
     tipo_retencion_irpf: 0,
+    total_pagado_empresa: 0,
   };
 
   actualizarGrafico() {
     // TODO cambiar el this sueldo por el calculo segun los inputs
-    this.results = this.f_calcular_resultado(this.sueldo!);
+    let salario_bruto_anual = this.sueldo!;
+    this.results = this.f_calcular_resultado(salario_bruto_anual);
+    this.results.total_pagado_empresa =
+      this.calcularSSEmpresa().total + salario_bruto_anual;
     console.log('results', this.results);
-    this.barChartData.datasets[0].data = [
-      this.calcularSSEmpresa().total, // Seguridad Social empresa
-      this.results.cuota_segsocial, // Seguridad Social trabajador
-      this.results.cuota_irpf, // IRPF
-      this.results.sueldo_neto, // Salario neto
-    ];
+
+    /*
+    
+    Salario neto
+    Seguridad Social Empresa
+    Seguridad Social Trabajador
+    IRPF
+     */
+
+    this.barChartData.datasets[0].data = [this.results.sueldo_neto, 0];
+    this.barChartData.datasets[1].data = [0, this.calcularSSEmpresa().total];
+    this.barChartData.datasets[2].data = [0, this.results.cuota_segsocial];
+    this.barChartData.datasets[3].data = [0, this.results.cuota_irpf];
     this.chart.update();
   }
 
@@ -72,31 +83,48 @@ export class AppComponent {
     });
   }
 
+  colors: any = {
+    red: 'rgb(255, 99, 132)',
+    red_bg: 'rgba(255, 99, 132, 0.2)',
+    green: 'rgb(75, 192, 192)',
+    green_bg: 'rgba(75, 192, 192, 0.2)',
+    blue: 'rgb(75, 75, 192)',
+    blue_bg: 'rgba(75, 75, 192, 0.2)',
+    purple: 'rgb(129, 68, 179)',
+    purple_bg: 'rgba(129, 68, 179, 0.2)',
+  };
   public dataSet: ChartDataset<'bar'>[] = [
     {
-      data: [0, 0, 0, 0],
-      backgroundColor: [
-        'rgba(255, 99, 132, 0.2)',
-        'rgba(75, 192, 192, 0.2)',
-        'rgba(54, 162, 235, 0.2)',
-        'rgba(153, 102, 255, 0.2)',
-      ],
-      borderColor: [
-        'rgb(255, 99, 132)',
-        'rgb(75, 192, 192)',
-        'rgb(54, 162, 235)',
-        'rgb(153, 102, 255)',
-      ],
+      label: 'Salario neto',
+      data: [0, 0],
+      backgroundColor: [this.colors.green_bg, this.colors.green_bg],
+      borderColor: [this.colors.green, this.colors.green],
+      borderWidth: 1,
+    },
+    {
+      label: 'Seguridad Social Empresa',
+      data: [0, 0],
+      backgroundColor: [this.colors.red_bg, this.colors.red_bg],
+      borderColor: [this.colors.red, this.colors.red],
+      borderWidth: 1,
+    },
+    {
+      label: 'Seguridad Social Trabajador',
+      data: [0, 0],
+      backgroundColor: [this.colors.blue_bg, this.colors.blue_bg],
+      borderColor: [this.colors.blue, this.colors.blue],
+      borderWidth: 1,
+    },
+    {
+      label: 'IRPF',
+      data: [0, 0],
+      backgroundColor: [this.colors.purple_bg, this.colors.purple_bg],
+      borderColor: [this.colors.purple, this.colors.purple],
       borderWidth: 1,
     },
   ];
   public barChartData = {
-    labels: [
-      'Seguridad Social empresa',
-      'Seguridad Social trabajador',
-      'IRPF',
-      'Salario neto',
-    ],
+    labels: ['Salario neto', 'Papá estado'],
     datasets: this.dataSet,
   };
   public barChartOptions: ChartOptions = {
@@ -106,7 +134,7 @@ export class AppComponent {
         text: 'Distribution de tu salario',
       },
       legend: {
-        display: false,
+        display: true,
       },
     },
     responsive: true,
