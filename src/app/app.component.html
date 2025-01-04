@@ -71,7 +71,9 @@
               <div class="row">
                 <div class="col-sm-10">Cuanto paga la empresa por mi:</div>
                 <div class="col-sm-2">
-                  <strong>{{ results.total_pagado_empresa }} €</strong>
+                  <strong
+                    >{{ results.total_pagado_empresa.toFixed(0) }} €</strong
+                  >
                 </div>
               </div>
             </li>
@@ -151,8 +153,11 @@
   </div>
 
   <div class="container mt-5">
-    <div class="row"></div>
+    <div class="row">
+      <div class="col-sm-12 text-center">&#64;Lekimlarra</div>
+    </div>
   </div>
+  <br /><br />
 </main>
 
 <router-outlet />

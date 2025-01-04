@@ -47,10 +47,41 @@ export class AppComponent {
     total_pagado_empresa: 0,
   };
 
-  calcularSalarioBrutoAnutal(): number {
-    let salario_bruto_anual = this.sueldo!;
+  aproximarBrutoAPartirDeNeto(): number {
+    let netoAnual = this.sueldo!;
     if (this.selectedPeriod == 'mensual') {
-      salario_bruto_anual = this.sueldo! * Number(this.pagas);
+      netoAnual = this.sueldo! * Number(this.pagas);
+    }
+    // Primera aproximación
+    let brutoAproximado = netoAnual * 2;
+    let resultadosIteracion = this.f_calcular_resultado(brutoAproximado);
+    let error = resultadosIteracion.sueldo_neto - netoAnual;
+    console.log(
+      `error primera it: ${error} para bruto inicial: ${brutoAproximado}`
+    );
+    let it = 0;
+    while (Math.abs(error) > 0.5 && it < 100) {
+      it++;
+      brutoAproximado = brutoAproximado - error;
+      resultadosIteracion = this.f_calcular_resultado(brutoAproximado);
+      error = resultadosIteracion.sueldo_neto - netoAnual;
+      console.log(
+        `error it[${it}]: ${error} para bruto inicial: ${brutoAproximado}`
+      );
+    }
+    console.log('Resultados aproximados:', resultadosIteracion);
+    return brutoAproximado;
+  }
+
+  calcularSalarioBrutoAnutal(): number {
+    let salario_bruto_anual = 0;
+    if (this.brutoNeto === 'bruto') {
+      salario_bruto_anual = this.sueldo!;
+      if (this.selectedPeriod == 'mensual') {
+        salario_bruto_anual = this.sueldo! * Number(this.pagas);
+      }
+    } else {
+      salario_bruto_anual = this.aproximarBrutoAPartirDeNeto();
     }
     return salario_bruto_anual;
   }
@@ -61,7 +92,6 @@ export class AppComponent {
     this.results = this.f_calcular_resultado(salario_bruto_anual);
     this.results.total_pagado_empresa =
       this.calcularSSEmpresa().total + salario_bruto_anual;
-    console.log('results', this.results);
 
     /*
     
@@ -741,26 +771,10 @@ export class AppComponent {
       this.f_calcuar_cuota_mensual_pagar(bruto_anual, categoria_profesional) *
       12;
 
-    console.log('\n#### Resultados:');
-    console.log('sueldo_bruto:', this.formatNumber(bruto_anual) + ' €');
-    console.log('cuota_irpf:', this.formatNumber(cuota_irpf.toFixed(1)) + ' €');
-    console.log(
-      'cuota_segsocial:',
-      this.formatNumber(cuota_segsocial.toFixed(1)) + ' €'
-    );
-    console.log(
-      'sueldo_neto:',
-      this.formatNumber(sueldo_neto.toFixed(1)) + ' €'
-    );
-    console.log(
-      'tipo_retencion_irpf:',
-      this.formatNumber(tipo_medio_sobre_sueldo_bruto)
-    );
-
     return {
-      cuota_irpf: cuota_irpf,
-      cuota_segsocial: cuota_segsocial,
-      sueldo_neto: sueldo_neto,
+      cuota_irpf: Math.trunc(cuota_irpf),
+      cuota_segsocial: Math.trunc(cuota_segsocial),
+      sueldo_neto: Math.trunc(sueldo_neto),
       tipo_retencion_irpf: tipo_medio_sobre_sueldo_bruto,
     };
   }
