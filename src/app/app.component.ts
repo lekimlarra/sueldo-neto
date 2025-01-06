@@ -182,6 +182,10 @@ export class AppComponent {
     },
   };
 
+  sueldoMensual(): string {
+    return (this.results.sueldo_neto / Number(this.pagas)).toFixed(0);
+  }
+
   f_calcuar_cuota_mensual_pagar(
     bruto_anual: number,
     categoria_profesional: string
@@ -701,7 +705,7 @@ export class AppComponent {
     return (irpf * 100) / rendimiento_neto;
   }
 
-  formatNumber = function (num: any) {
+  formatNumber = function (num: any, decimals: boolean = false) {
     var separador = '.';
     var sepDecimal = ',';
     num += '';
@@ -713,7 +717,8 @@ export class AppComponent {
     while (regx.test(splitLeft)) {
       splitLeft = splitLeft.replace(regx, '$1' + separador + '$2');
     }
-    return splitLeft + splitRight;
+    if (decimals) return splitLeft + splitRight;
+    return splitLeft;
   }; //end function formatNumber
 
   f_calcular_resultado(bruto_anual: number) {
