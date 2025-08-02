@@ -1,7 +1,12 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { BaseChartDirective } from 'ng2-charts';
-import { ChartOptions, ChartType, ChartDataset } from 'chart.js';
+import {
+  ChartOptions,
+  ChartType,
+  ChartDataset,
+  ChartTypeRegistry,
+} from 'chart.js';
 import { FormsModule } from '@angular/forms';
 import { Chart } from 'chart.js';
 import { CommonModule } from '@angular/common';
@@ -99,6 +104,8 @@ export class AppComponent {
       this.barChartData.datasets[2].data = [0, this.results.cuota_segsocial];
       this.barChartData.datasets[3].data = [0, this.results.cuota_irpf];
       this.chart.update();
+      // Pintando grafico de en que se gastan los impuestos
+      this.initializeExpensesChart();
     }
   }
 
@@ -776,5 +783,243 @@ export class AppComponent {
       sueldo_neto: Math.trunc(sueldo_neto),
       tipo_retencion_irpf: tipo_medio_sobre_sueldo_bruto,
     };
+  }
+
+  // CALCULANDO EN QUÉ SE GASTAN LOS IMPUESTOS
+
+  public expensesChartDataSet: ChartDataset<'bar'>[] = [];
+  public expensesChartData = {
+    labels: ['Para el trabajador', 'Otros'],
+    datasets: this.expensesChartDataSet,
+  };
+
+  public expensesChartOptions: ChartOptions = {
+    plugins: {
+      title: {
+        display: true,
+        text: 'En qué se gastan tus impuestos',
+      },
+      legend: {
+        display: false,
+      },
+    },
+    indexAxis: 'y',
+    aspectRatio: window.innerWidth < 500 ? 1 : 2,
+    responsive: true,
+    scales: {
+      x: {
+        stacked: true,
+      },
+      y: {
+        stacked: true,
+      },
+    },
+  };
+
+  expensesChart: any;
+  expensesThreshold: number = 0.01;
+
+  initializeExpensesChart() {
+    const ctx2 = document.getElementById('expensesChart') as HTMLCanvasElement;
+    let type = 'bar' as keyof ChartTypeRegistry;
+    if (type === 'bar')
+      this.formatExpensesData(this.distribucionGastos, this.expensesThreshold);
+    else
+      this.formatExpensesDataPie(
+        this.distribucionGastos,
+        this.expensesThreshold
+      );
+
+    // Destruir instancia anterior si existe
+    if (this.expensesChart) {
+      this.expensesChart.destroy();
+    }
+    this.expensesChart = new Chart(ctx2, {
+      type: type,
+      data: this.expensesChartData,
+      options: this.expensesChartOptions,
+    });
+  }
+
+  byValueDesc = (
+    a: { key: string; value: number },
+    b: { key: string; value: number }
+  ) => b.value - a.value;
+
+  distribucionGastos = {
+    Pensiones: 0.4230644,
+    'Transferencias a otras admones. públicas': 0.1474464,
+    'Deuda pública': 0.069389,
+    'Otras prestaciones económicas': 0.0494745,
+    Desempleo: 0.0472074,
+    Defensa: 0.0273203,
+    Infraestructuras: 0.024116,
+    'Seguridad ciudadana e instituciones penitenciarias': 0.0237801,
+    'Investigación, desarrollo e innovación': 0.0231834,
+    'Servicios de carácter general': 0.0214277,
+    'Industria y energía': 0.0199733,
+    'Agricultura, pesca y alimentación': 0.0188838,
+    'Fomento del empleo': 0.0178128,
+    'Servicios sociales y promoción social': 0.0157832,
+    Sanidad: 0.0156382,
+    Educación: 0.0109219,
+    'Subvenciones al transporte': 0.0076492,
+    Justicia: 0.0050822,
+    'Gestión y administración de la Seguridad Social': 0.0050125,
+    'Política exterior': 0.0048597,
+    'Acceso a la vivienda y fomento de la edificación': 0.0046965,
+    Cultura: 0.003973,
+    'Administración financiera y tributaria': 0.0038887,
+    'Comercio, turismo y PYMES': 0.0037036,
+    'Otras actuaciones de carácter económico': 0.0032136,
+    'Alta dirección': 0.0020693,
+    'Gestión y administración de Trabajo y Economía Social': 0.0004291,
+  };
+  totalImpuestos: number = 0;
+  calculateTmpExpensesValues(distribucionGastos: Object, threshold: number) {
+    this.totalImpuestos =
+      this.calcularSSEmpresa().total +
+      this.results.cuota_segsocial +
+      this.results.cuota_irpf;
+
+    let tempData = [];
+    let lastItem = [];
+    for (const [key, value] of Object.entries(distribucionGastos)) {
+      if (value > threshold) {
+        tempData.push({
+          key: key,
+          value: value * this.totalImpuestos,
+        });
+      } else {
+        lastItem.push({
+          key: key,
+          value: value * this.totalImpuestos,
+        });
+      }
+    }
+    return {
+      tempData: tempData,
+      lastItem: lastItem,
+    };
+  }
+
+  formatExpensesData(distribucionGastos: Object, threshold: number) {
+    this.expensesChartDataSet = [];
+
+    const tmpValues = this.calculateTmpExpensesValues(
+      distribucionGastos,
+      threshold
+    );
+    let tempData = tmpValues.tempData;
+    let lastItem = tmpValues.lastItem;
+
+    const dataLength = tempData.length + 1;
+    let backgroundColorBasis = Array(dataLength).fill(this.colors.green_bg);
+    let borderColorBasis = Array(dataLength).fill(this.colors.green);
+
+    let counter = 0;
+    for (let bar of tempData) {
+      let dataBasis = Array(dataLength).fill(0);
+      let thisData = dataBasis;
+      thisData[counter] = Math.floor(bar.value);
+      this.expensesChartDataSet.push({
+        label: bar.key,
+        data: thisData,
+        backgroundColor: backgroundColorBasis,
+        borderColor: borderColorBasis,
+        borderWidth: 1,
+      });
+      counter++;
+    }
+
+    for (let bar of lastItem) {
+      let lastItemData = Array(dataLength).fill(0);
+      lastItemData[dataLength - 1] = Math.floor(bar.value);
+      const elem = {
+        label: bar.key,
+        data: lastItemData,
+        backgroundColor: backgroundColorBasis,
+        borderColor: borderColorBasis,
+        borderWidth: 1,
+      };
+      this.expensesChartDataSet.push(elem);
+    }
+
+    let finalLabels = tempData.map((obj) => obj.key);
+    finalLabels.push('Otros');
+    this.expensesChartData = {
+      labels: finalLabels,
+      datasets: this.expensesChartDataSet,
+    };
+  }
+  // Devuelve arrays de fondo y borde para N elementos
+  getChartColors(n: number): {
+    backgroundColor: string[];
+    borderColor: string[];
+  } {
+    const backgroundColor: string[] = [];
+    const borderColor: string[] = [];
+
+    for (let i = 0; i < n; i++) {
+      // Recorremos el círculo de color HSL
+      const hue = ((i * 360) / n) % 360;
+
+      // Fondo: color pastel translúcido
+      backgroundColor.push(`hsla(${hue}, 70%, 65%, 0.5)`);
+
+      // Borde: mismo color pero sólido y más oscuro
+      borderColor.push(`hsl(${hue}, 70%, 45%)`);
+    }
+
+    return { backgroundColor, borderColor };
+  }
+
+  formatExpensesDataPie(distribucionGastos: Object, threshold: number) {
+    const tmpValues = this.calculateTmpExpensesValues(
+      distribucionGastos,
+      threshold
+    );
+    let tempData = tmpValues.tempData;
+    let lastItem = tmpValues.lastItem;
+    let finalLabels = tempData.map((obj) => obj.key);
+    finalLabels.push('Otros');
+    let finalData = tempData.map((obj) => Math.floor(obj.value));
+    finalData.push(
+      lastItem.reduce((acumulado, actual) => acumulado + actual.value, 0)
+    );
+
+    const finalColors = this.getChartColors(finalLabels.length);
+    this.expensesChartDataSet = [];
+    const data = {
+      labels: finalLabels,
+      datasets: [
+        {
+          data: finalData,
+          backgroundColor: finalColors.backgroundColor,
+          borderColor: finalColors.borderColor,
+          hoverOffset: 4,
+        },
+      ],
+    };
+    this.expensesChartData = data;
+    this.expensesChartOptions = {
+      plugins: {
+        title: {
+          display: true,
+          text: 'En qué se gastan tus impuestos',
+        },
+      },
+      aspectRatio: window.innerWidth < 500 ? 1 : 2,
+      responsive: true,
+    };
+  }
+
+  allocateRetention(totalRetention: any) {
+    return Object.fromEntries(
+      Object.entries(this.distribucionGastos).map(([k, v]) => [
+        k,
+        +((totalRetention * v) / 100).toFixed(2),
+      ])
+    );
   }
 }

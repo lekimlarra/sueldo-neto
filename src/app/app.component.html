@@ -208,6 +208,62 @@
     </div>
   </div>
 
+  <div *ngIf="sueldo">
+    <div class="container mt-5">
+      <div class="row">
+        <div class="col-1 col-md-2"></div>
+        <div class="col-10 col-md-8">
+          <canvas id="expensesChart" baseChart> </canvas>
+        </div>
+        <div class="col-1 col-md-2"></div>
+      </div>
+    </div>
+
+    <div class="container mt-5">
+      <div class="row">
+        <div class="col-1 col-md-3"></div>
+        <div class="col-10 col-md-6">
+          <h4>En qué se gastan tus impuestos</h4>
+          <ul class="list-group">
+            <li
+              class="list-group-item"
+              *ngFor="let item of distribucionGastos | keyvalue : byValueDesc"
+            >
+              <div class="row">
+                <div class="col-8 col-md-10">{{ item.key }}:</div>
+                <div class="col-4 col-md-2">
+                  <strong>
+                    {{ formatNumber(item.value * totalImpuestos) }} €
+                  </strong>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div class="col-1 col-md-3"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container mt-5">
+    <div class="row">
+      <div class="col-1 col-md-2"></div>
+      <div class="col-10 col-md-8">
+        <div>
+          <p>
+            Datos de 2023 sacados de
+            <a
+              href="https://dondevanmisimpuestos.es/politicas#view=functional&year=2023"
+              target="_blank"
+              >dondevanmisimpuestos.es/politicas</a
+            >
+          </p>
+        </div>
+      </div>
+      <div class="col-1 col-md-2"></div>
+    </div>
+  </div>
+
   <div class="container mt-5">
     <div class="row">
       <div class="col-sm-12 text-center">&#64;Lekimlarra</div>
