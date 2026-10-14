@@ -214,6 +214,21 @@
         <div class="col-1 col-md-2"></div>
         <div class="col-10 col-md-8">
           <canvas id="expensesChart" baseChart> </canvas>
+          <div class="form-check form-switch mt-3">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              role="switch"
+              id="desglosarAutonomias"
+              [(ngModel)]="desglosarAutonomias"
+              (ngModelChange)="initializeExpensesChart()"
+            />
+            <label class="form-check-label" for="desglosarAutonomias">
+              Repartir las transferencias a otras administraciones entre
+              autonomías (sanidad, educación, servicios sociales) y
+              ayuntamientos
+            </label>
+          </div>
         </div>
         <div class="col-1 col-md-2"></div>
       </div>
@@ -225,20 +240,31 @@
         <div class="col-10 col-md-6">
           <h4>En qué se gastan tus impuestos</h4>
           <ul class="list-group">
-            <li
-              class="list-group-item"
-              *ngFor="let item of distribucionGastos | keyvalue : byValueDesc"
-            >
+            <li class="list-group-item" *ngFor="let fila of filasActuales">
               <div class="row">
-                <div class="col-8 col-md-10">{{ item.key }}:</div>
+                <div class="col-8 col-md-10">
+                  {{ fila.key }}:
+                  <div class="small text-muted" *ngIf="fila.estado && fila.ccaa">
+                    Estado {{ formatNumber(fila.estado * totalImpuestos) }} € +
+                    autonomías {{ formatNumber(fila.ccaa * totalImpuestos) }} €
+                  </div>
+                </div>
                 <div class="col-4 col-md-2">
                   <strong>
-                    {{ formatNumber(item.value * totalImpuestos) }} €
+                    {{ formatNumber(fila.total * totalImpuestos) }} €
                   </strong>
                 </div>
               </div>
             </li>
           </ul>
+          <p class="small text-muted mt-2" *ngIf="desglosarAutonomias">
+            Las partidas de autonomías y ayuntamientos son una estimación: la partida de
+            transferencias se reparte con las entregas a cuenta de 2026 (84 %
+            autonomías, 16 % entidades locales) y los presupuestos autonómicos
+            de 2023 (30,6 % sanidad, 20,2 % educación, 7,6 % servicios
+            sociales).
+            <a href="/gasto-publico/">Cómo se ha calculado</a>
+          </p>
         </div>
         <div class="col-1 col-md-3"></div>
       </div>
@@ -251,7 +277,12 @@
       <div class="col-10 col-md-8">
         <div>
           <p>
-            Datos de 2023 sacados de
+            Cotizaciones a la Seguridad Social e IRPF con la normativa de 2026,
+            para un trabajador con contrato indefinido en Cataluña, sin hijos y
+            del grupo de cotización 1.
+          </p>
+          <p>
+            Reparto de los impuestos con datos de 2023 sacados de
             <a
               href="https://dondevanmisimpuestos.es/politicas#view=functional&year=2023"
               target="_blank"

@@ -11,6 +11,14 @@ import { FormsModule } from '@angular/forms';
 import { Chart } from 'chart.js';
 import { CommonModule } from '@angular/common';
 
+interface FilaGasto {
+  key: string;
+  estado: number;
+  ccaa: number;
+  local: number;
+  total: number;
+}
+
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet, BaseChartDirective, FormsModule, CommonModule],
@@ -34,13 +42,16 @@ export class AppComponent {
       contingenciasProfesionales: this.calcularSalarioBrutoAnutal() * 0.035,
       formacion: this.calcularSalarioBrutoAnutal() * 0.006,
       fogasa: this.calcularSalarioBrutoAnutal() * 0.002,
+      // Mecanismo de Equidad Intergeneracional 2026: 0,90 % (0,75 % empresa, 0,15 % trabajador)
+      mei: this.calcularSalarioBrutoAnutal() * 0.0075,
     };
     sse.total =
       sse.contingenciasComunes +
       sse.desempleo +
       sse.contingenciasProfesionales +
       sse.formacion +
-      sse.fogasa;
+      sse.fogasa +
+      sse.mei;
     return sse;
   }
 
@@ -203,30 +214,54 @@ export class AppComponent {
     }
 
     var datos: { [key: string]: { min: number; max: number }[] } = {
-      A: [{ min: 1466.4, max: 4070.1 }],
-      B: [{ min: 1215.9, max: 4070.1 }],
-      C: [{ min: 1057.8, max: 4070.1 }],
-      D: [{ min: 1050, max: 4070.1 }],
-      E: [{ min: 1050, max: 4070.1 }],
-      F: [{ min: 1050, max: 4070.1 }],
-      G: [{ min: 1050, max: 4070.1 }],
-      H: [{ min: 770, max: 2984.74 }],
-      I: [{ min: 770, max: 2984.74 }],
-      J: [{ min: 770, max: 2984.74 }],
-      K: [{ min: 770, max: 2984.74 }],
+      // Bases mensuales de 2026 (Orden PJC/297/2026). Grupos 8-11: bases diarias x 30.
+      A: [{ min: 1989.3, max: 5101.2 }],
+      B: [{ min: 1649.7, max: 5101.2 }],
+      C: [{ min: 1435.2, max: 5101.2 }],
+      D: [{ min: 1424.4, max: 5101.2 }],
+      E: [{ min: 1424.4, max: 5101.2 }],
+      F: [{ min: 1424.4, max: 5101.2 }],
+      G: [{ min: 1424.4, max: 5101.2 }],
+      H: [{ min: 1424.4, max: 5101.2 }],
+      I: [{ min: 1424.4, max: 5101.2 }],
+      J: [{ min: 1424.4, max: 5101.2 }],
+      K: [{ min: 1424.4, max: 5101.2 }],
     };
+
+    // Trabajador en 2026: 4,70 % contingencias comunes + 1,55 % desempleo + 0,10 % formación
+    // profesional + 0,15 % MEI = 6,50 %.
+    const tipo_trabajador = 0.065;
 
     var cuota_mensual_pagar = 0;
     if (bruto_anual / 12 < datos[categoria_profesional][0].min) {
-      cuota_mensual_pagar = datos[categoria_profesional][0].min * 0.0635;
+      cuota_mensual_pagar = datos[categoria_profesional][0].min * tipo_trabajador;
     } else if (bruto_anual / 12 > datos[categoria_profesional][0].max) {
-      cuota_mensual_pagar = datos[categoria_profesional][0].max * 0.0635;
+      const max = datos[categoria_profesional][0].max;
+      cuota_mensual_pagar =
+        max * tipo_trabajador +
+        this.f_calcular_solidaridad_mensual(bruto_anual / 12, max);
     } else {
       if (categoria_profesional == 'J') {
         cuota_mensual_pagar = (bruto_anual / 12) * 0.0192;
-      } else cuota_mensual_pagar = (bruto_anual / 12) * 0.0635;
+      } else cuota_mensual_pagar = (bruto_anual / 12) * tipo_trabajador;
     }
     return cuota_mensual_pagar;
+  }
+
+  // Cotización adicional de solidaridad 2026 (parte del trabajador) sobre lo que supera la base máxima.
+  f_calcular_solidaridad_mensual(bruto_mensual: number, base_maxima: number) {
+    const tramos = [
+      [base_maxima, 5611.32, 0.0019],
+      [5611.32, 7651.8, 0.0021],
+      [7651.8, Infinity, 0.0024],
+    ];
+    let cuota = 0;
+    for (const [desde, hasta, tipo] of tramos) {
+      if (bruto_mensual > desde) {
+        cuota += (Math.min(bruto_mensual, hasta) - desde) * tipo;
+      }
+    }
+    return cuota;
   }
 
   f_calcular_reduccion_rendimiento_neto(
@@ -239,12 +274,18 @@ export class AppComponent {
     var minusvalia_sup_al_65 = false;
     var hijos_menores_25 = 0;
 
-    if (rendimiento_neto <= 13115) var reduccion_rendimiento_neto = 5565;
-    else if (rendimiento_neto >= 16825) var reduccion_rendimiento_neto = 0;
-    else
-      var reduccion_rendimiento_neto = 5565 - 1.5 * (rendimiento_neto - 13115);
-
     var reduccion_comun_todos = 2000;
+
+    // La reducción se calcula sobre el rendimiento neto previo, que ya descuenta los 2.000 € de
+    // otros gastos además de la Seguridad Social.
+    const rnt = rendimiento_neto - reduccion_comun_todos;
+    if (rnt <= 14852) var reduccion_rendimiento_neto = 7302;
+    else if (rnt <= 17673.52)
+      var reduccion_rendimiento_neto = 7302 - 1.75 * (rnt - 14852);
+    else if (rnt < 19747.5)
+      var reduccion_rendimiento_neto = 2364.34 - 1.14 * (rnt - 17673.52);
+    else var reduccion_rendimiento_neto = 0;
+
     var incremento_prolongacion_vida_laboral = 0;
 
     //si el check de movilidad_geografica esta seleccionado
@@ -581,13 +622,14 @@ export class AppComponent {
 
       // Cataluña
       '9': [
-        [0, 17707.2, 12],
-        [17707.2, 33007.2, 14],
-        [33007.2, 53407.2, 18.5],
-        [53407.2, 90000, 21.5],
-        [90000, 120000.2, 23.5],
-        [120000.2, 175000.2, 24.5],
-        [175000.2, 999999999999, 25.5],
+        [0, 12500, 9.5],
+        [12500, 22000, 12.5],
+        [22000, 33000, 16],
+        [33000, 53000, 19],
+        [53000, 90000, 21.5],
+        [90000, 120000, 23.5],
+        [120000, 175000, 24.5],
+        [175000, 999999999999, 25.5],
       ],
 
       // Comunidad Valenciana
@@ -683,6 +725,16 @@ export class AppComponent {
     return totalTramos;
   }
 
+  // Deducción 2026 de la cuota para salarios bajos (rendimientos íntegros hasta 20.048,45 €).
+  // Nunca supera la cuota. Se aplica en la declaración de la renta, no en las retenciones.
+  f_calcular_deduccion_rentas_bajas(bruto_anual: number, cuota_irpf: number) {
+    let deduccion = 0;
+    if (bruto_anual <= 17094) deduccion = 590.89;
+    else if (bruto_anual < 20048.45)
+      deduccion = 590.89 - 0.2 * (bruto_anual - 17094);
+    return Math.min(deduccion, cuota_irpf);
+  }
+
   f_calcular_sueldo_neto(
     bruto_anual: number,
     categoria_profesional: string,
@@ -754,6 +806,10 @@ export class AppComponent {
     /* IRPF */
     var cuota_irpf = cuota_retencion;
     if (cuota_irpf < 0) cuota_irpf = 0;
+    cuota_irpf -= this.f_calcular_deduccion_rentas_bajas(
+      bruto_anual,
+      cuota_irpf
+    );
 
     /* Sueldos netos */
     var sueldo_neto = this.f_calcular_sueldo_neto(
@@ -802,9 +858,13 @@ export class AppComponent {
       legend: {
         display: false,
       },
+      tooltip: {
+        // No mostrar las procedencias que valen 0 en esa barra.
+        filter: (item) => item.raw !== 0,
+      },
     },
     indexAxis: 'y',
-    aspectRatio: window.innerWidth < 500 ? 1 : 2,
+    aspectRatio: window.innerWidth < 500 ? 0.7 : 1.1,
     responsive: true,
     scales: {
       x: {
@@ -812,6 +872,9 @@ export class AppComponent {
       },
       y: {
         stacked: true,
+        ticks: {
+          autoSkip: false,
+        },
       },
     },
   };
@@ -821,9 +884,14 @@ export class AppComponent {
 
   initializeExpensesChart() {
     const ctx2 = document.getElementById('expensesChart') as HTMLCanvasElement;
+    if (!ctx2) {
+      // La primera vez el canvas aún no existe (lo crea el *ngIf del sueldo): reintentar.
+      setTimeout(() => this.initializeExpensesChart());
+      return;
+    }
     let type = 'bar' as keyof ChartTypeRegistry;
     if (type === 'bar')
-      this.formatExpensesData(this.distribucionGastos, this.expensesThreshold);
+      this.formatExpensesData(this.expensesThreshold);
     else
       this.formatExpensesDataPie(
         this.distribucionGastos,
@@ -846,7 +914,7 @@ export class AppComponent {
     b: { key: string; value: number }
   ) => b.value - a.value;
 
-  distribucionGastos = {
+  distribucionGastos: { [key: string]: number } = {
     Pensiones: 0.4230644,
     'Transferencias a otras admones. públicas': 0.1474464,
     'Deuda pública': 0.069389,
@@ -875,6 +943,65 @@ export class AppComponent {
     'Alta dirección': 0.0020693,
     'Gestión y administración de Trabajo y Economía Social': 0.0004291,
   };
+
+  // Reparto de la partida «Transferencias a otras admones. públicas» (estimación).
+  // Entre autonomías y entidades locales: entregas a cuenta de 2026 (M€).
+  // Dentro de las autonomías: % de sus presupuestos de 2023. Lo que va a sanidad, educación y
+  // servicios sociales se suma a la misma fila que el gasto del Estado en esa política.
+  private readonly claveTransferencias =
+    'Transferencias a otras admones. públicas';
+  private readonly entregasCCAA = 157731;
+  private readonly entregasEELL = 29246;
+  private readonly mezclaCCAA: { pct: number; destino: string | null }[] = [
+    { pct: 0.306, destino: 'Sanidad' },
+    { pct: 0.202, destino: 'Educación' },
+    { pct: 0.076, destino: 'Servicios sociales y promoción social' },
+    { pct: 0.416, destino: null },
+  ];
+  private readonly claveCCAAResto = 'Autonomías: resto de su gasto';
+  private readonly claveLocales = 'Ayuntamientos y entidades locales';
+
+  desglosarAutonomias = true;
+
+  filasSinAutonomias: FilaGasto[] = this.calcularFilas(false);
+  filasConAutonomias: FilaGasto[] = this.calcularFilas(true);
+
+  get filasActuales(): FilaGasto[] {
+    return this.desglosarAutonomias
+      ? this.filasConAutonomias
+      : this.filasSinAutonomias;
+  }
+
+  // Cada fila es una política de gasto, con la fracción de tus impuestos que paga el Estado,
+  // las autonomías y los ayuntamientos. Ordenadas de mayor a menor total.
+  private calcularFilas(conAutonomias: boolean): FilaGasto[] {
+    const filas = new Map<string, FilaGasto>();
+    const fila = (key: string): FilaGasto => {
+      let f = filas.get(key);
+      if (!f) {
+        f = { key, estado: 0, ccaa: 0, local: 0, total: 0 };
+        filas.set(key, f);
+      }
+      return f;
+    };
+    for (const [key, value] of Object.entries(this.distribucionGastos)) {
+      if (conAutonomias && key === this.claveTransferencias) continue;
+      fila(key).estado = value;
+    }
+    if (conAutonomias) {
+      const partida = this.distribucionGastos[this.claveTransferencias];
+      const parteCCAA =
+        this.entregasCCAA / (this.entregasCCAA + this.entregasEELL);
+      for (const m of this.mezclaCCAA) {
+        fila(m.destino ?? this.claveCCAAResto).ccaa +=
+          partida * parteCCAA * m.pct;
+      }
+      fila(this.claveLocales).local = partida * (1 - parteCCAA);
+    }
+    for (const f of filas.values()) f.total = f.estado + f.ccaa + f.local;
+    return [...filas.values()].sort((x, y) => y.total - x.total);
+  }
+
   totalImpuestos: number = 0;
   calculateTmpExpensesValues(distribucionGastos: Object, threshold: number) {
     this.totalImpuestos =
@@ -903,55 +1030,59 @@ export class AppComponent {
     };
   }
 
-  formatExpensesData(distribucionGastos: Object, threshold: number) {
-    this.expensesChartDataSet = [];
+  formatExpensesData(threshold: number) {
+    this.totalImpuestos =
+      this.calcularSSEmpresa().total +
+      this.results.cuota_segsocial +
+      this.results.cuota_irpf;
+    const total = this.totalImpuestos;
 
-    const tmpValues = this.calculateTmpExpensesValues(
-      distribucionGastos,
-      threshold
+    const grandes = this.filasActuales.filter((f) => f.total > threshold);
+    const pequenas = this.filasActuales.filter((f) => f.total <= threshold);
+    const n = grandes.length + 1; // la última barra es «Otros»
+
+    const serie = (label: string, color: string, colorBg: string) => ({
+      label,
+      data: Array(n).fill(0) as number[],
+      backgroundColor: colorBg,
+      borderColor: color,
+      borderWidth: 1,
+    });
+    const estado = serie(
+      'Estado y Seguridad Social',
+      this.colors.green,
+      this.colors.green_bg
     );
-    let tempData = tmpValues.tempData;
-    let lastItem = tmpValues.lastItem;
+    const ccaa = serie('Autonomías', this.colors.blue, this.colors.blue_bg);
+    const local = serie(
+      'Ayuntamientos y entidades locales',
+      this.colors.purple,
+      this.colors.purple_bg
+    );
 
-    const dataLength = tempData.length + 1;
-    let backgroundColorBasis = Array(dataLength).fill(this.colors.green_bg);
-    let borderColorBasis = Array(dataLength).fill(this.colors.green);
+    grandes.forEach((f, i) => {
+      estado.data[i] = Math.floor(f.estado * total);
+      ccaa.data[i] = Math.floor(f.ccaa * total);
+      local.data[i] = Math.floor(f.local * total);
+    });
+    const sumar = (campo: 'estado' | 'ccaa' | 'local') =>
+      Math.floor(pequenas.reduce((acc, f) => acc + f[campo], 0) * total);
+    estado.data[n - 1] = sumar('estado');
+    ccaa.data[n - 1] = sumar('ccaa');
+    local.data[n - 1] = sumar('local');
 
-    let counter = 0;
-    for (let bar of tempData) {
-      let dataBasis = Array(dataLength).fill(0);
-      let thisData = dataBasis;
-      thisData[counter] = Math.floor(bar.value);
-      this.expensesChartDataSet.push({
-        label: bar.key,
-        data: thisData,
-        backgroundColor: backgroundColorBasis,
-        borderColor: borderColorBasis,
-        borderWidth: 1,
-      });
-      counter++;
-    }
-
-    for (let bar of lastItem) {
-      let lastItemData = Array(dataLength).fill(0);
-      lastItemData[dataLength - 1] = Math.floor(bar.value);
-      const elem = {
-        label: bar.key,
-        data: lastItemData,
-        backgroundColor: backgroundColorBasis,
-        borderColor: borderColorBasis,
-        borderWidth: 1,
-      };
-      this.expensesChartDataSet.push(elem);
-    }
-
-    let finalLabels = tempData.map((obj) => obj.key);
-    finalLabels.push('Otros');
+    this.expensesChartDataSet = [estado, ccaa, local].filter((d) =>
+      d.data.some((v) => v > 0)
+    );
+    // La leyenda solo hace falta cuando hay más de una procedencia del dinero.
+    this.expensesChartOptions.plugins!.legend!.display =
+      this.expensesChartDataSet.length > 1;
     this.expensesChartData = {
-      labels: finalLabels,
+      labels: [...grandes.map((f) => f.key), 'Otros'],
       datasets: this.expensesChartDataSet,
     };
   }
+
   // Devuelve arrays de fondo y borde para N elementos
   getChartColors(n: number): {
     backgroundColor: string[];
